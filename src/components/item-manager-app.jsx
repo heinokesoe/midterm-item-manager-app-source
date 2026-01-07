@@ -22,6 +22,91 @@ function ItemManager () {
   const itemName = useRef(null);
 
   //TODO: Your code goes here
+  // Additional refs for category and price
+  const categoryRef = useRef(null);
+  const priceRef = useRef(null);
+
+  // State for next ID (auto-incrementing)
+  const [nextId, setNextId] = useState(1);
+
+  // Helper function to get category icon
+  const getCategoryIcon = (category) => {
+    switch (category) {
+      case 'Stationary':
+        return stationaryLogo;
+      case 'Kitchenware':
+        return kitchenwareLogo;
+      case 'Appliance':
+        return applianceLogo;
+      default:
+        return null;
+    }
+  };
+
+  // Validation function
+  const validateItem = (name, category, price) => {
+    // Check if name is empty
+    if (!name || name.trim() === '') {
+      return 'Item name must not be empty';
+    }
+
+    // Check if item name is duplicated (case insensitive)
+    const isDuplicate = items.some(
+      item => item.name.toLowerCase() === name.trim().toLowerCase()
+    );
+    if (isDuplicate) {
+      return 'Item must not be duplicated';
+    }
+
+    // Check if category is selected
+    if (!category || category === '') {
+      return 'Please select a category';
+    }
+
+    // Check if price is less than 0
+    const priceValue = parseFloat(price);
+    if (isNaN(priceValue) || priceValue < 0) {
+      return 'Price must not be less than 0';
+    }
+
+    return ''; // No errors
+  };
+
+  // Handle Add Item
+  const handleAddItem = () => {
+    const name = itemName.current.value;
+    const category = categoryRef.current.value;
+    const price = priceRef.current.value;
+
+    // Validate
+    const error = validateItem(name, category, price);
+    if (error) {
+      setErrorMsg(error);
+      return;
+    }
+
+    // Add item to list
+    const newItem = {
+      id: nextId,
+      name: name.trim(),
+      category: category,
+      price: parseFloat(price).toFixed(2)
+    };
+
+    setItems([...items, newItem]);
+    setNextId(nextId + 1);
+    setErrorMsg('');
+
+    // Clear form
+    itemName.current.value = '';
+    categoryRef.current.value = '';
+    priceRef.current.value = '';
+  };
+
+  // Handle Delete Item
+  const handleDeleteItem = (id) => {
+    setItems(items.filter(item => item.id !== id));
+  };
 
   /*
    * !!! IMPORTANT !!!
@@ -52,11 +137,65 @@ function ItemManager () {
               * - All items must be listed here (above the form row).
               * - Your input form must be implemented as the LAST row in this table.
               */}
+            {/* Render existing items */}
+            {items.map((item) => (
+              <tr key={item.id}>
+                <td>{item.id}</td>
+                <td>{item.name}</td>
+                <td>
+                  <img
+                    src={getCategoryIcon(item.category)}
+                    alt={item.category}
+                    className="category-icon"
+                  />
+                </td>
+                <td>{item.price}</td>
+                <td>
+                  <img
+                    src={deleteLogo}
+                    alt="Delete"
+                    className="delete-icon"
+                    onClick={() => handleDeleteItem(item.id)}
+                  />
+                </td>
+              </tr>
+            ))}
+
+            {/* Input form row */}
+            <tr>
+              <td></td>
+              <td>
+                <input
+                  type="text"
+                  ref={itemName}
+                  placeholder="Item name"
+                />
+              </td>
+              <td>
+                <select ref={categoryRef} defaultValue="">
+                  <option value="" disabled></option>
+                  <option value="Stationary">Stationary</option>
+                  <option value="Kitchenware">Kitchenware</option>
+                  <option value="Appliance">Appliance</option>
+                </select>
+              </td>
+              <td>
+                <input
+                  type="number"
+                  ref={priceRef}
+                  placeholder="0"
+                />
+              </td>
+              <td>
+                <button onClick={handleAddItem}>Add Item</button>
+              </td>
+            </tr>
           </tbody>
         </table>
       </div>
       <div id="error-message">
          {/* You MUST display the errorMsg state here. */}
+        {errorMsg}
       </div>
     </>
   );
